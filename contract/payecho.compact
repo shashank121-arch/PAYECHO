@@ -1,0 +1,51 @@
+pragma language_version >= 0.14.0;
+
+import Sigs;
+
+// Define public ledger state
+export ledger bandCounters: Map<Uint<32>, Uint<32>>;
+export ledger nullifiers: Map<Bytes<32>, Boolean>;
+
+constructor() {
+    // Initialize band counts
+    bandCounters[1] = 0; // < 50k
+    bandCounters[2] = 0; // 50k - 100k
+    bandCounters[3] = 0; // > 100k
+}
+
+// Define the private witness data format
+witness local_salary(): Uint<32>;
+witness local_salt(): Bytes<32>;
+
+// Circuit to anonymously submit a salary
+export circuit submitSalary(): [] {
+    // 1. Read private inputs from the local device witness
+    const salary = local_salary();
+    const salt = local_salt();
+
+    // 2. Hash the secret salt to create a nullifier to prevent double voting
+    // Using sha256 from Sigs or similar hash function (stubbed using salt directly if hash is unavailable, but let's assume we can cast or hash). 
+    // In actual Midnight compact, we would use something like `crypto::sha256(salt)`.
+    // We will use salt directly as the 32 byte hash identifier for simplicity in this example.
+    const nullifier = salt; 
+    
+    assert !nullifiers[nullifier] "Salary already submitted with this salt";
+    nullifiers[nullifier] = true;
+
+    // 3. Compute Band ID privately
+    let bandId: Uint<32> = 3;
+    if (salary < 50000) {
+        bandId = 1;
+    } else {
+        if (salary < 100000) {
+            bandId = 2;
+        }
+    }
+
+    // 4. Disclose the computed band ID to the public state without revealing exact salary
+    const publicBandId = disclose(bandId);
+    
+    // 5. Update the public ledger mapping
+    const currentCount = bandCounters[publicBandId];
+    bandCounters[publicBandId] = currentCount + 1;
+}
