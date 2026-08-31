@@ -7,3 +7,7 @@ export const Contract = {
   })
 };
 export const httpClientProofProvider = () => ({});
+export type MidnightProviders = any;
+export type ContractAddress = any;
+export type DAppConnectorAPI = any;
+export type DAppConnectorWalletAPI = any;
