@@ -23,15 +23,7 @@ export default function PhilosophySection() {
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="rounded-3xl overflow-hidden aspect-[4/3] liquid-glass"
                     >
-                        {/* Placeholder video */}
-                        <video 
-                            className="w-full h-full object-cover opacity-80"
-                            autoPlay 
-                            muted 
-                            loop 
-                            playsInline
-                            src="https://cdn.pixabay.com/video/2020/05/25/40141-424756539_large.mp4"
-                        />
+                        <div className="w-full h-full bg-gradient-to-tr from-gray-900 via-black to-gray-800 animate-pulse opacity-80" />
                     </motion.div>
 
                     {/* Right: Text Blocks */}

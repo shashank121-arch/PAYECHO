@@ -41,13 +41,31 @@ export function useMidnight() {
         try {
             setStatusMessage('Connecting to 1AM Wallet...');
             
-            const midnight = (window as any).midnight as { mn1am?: DAppConnectorAPI };
-            const mn1am = midnight?.mn1am;
-            if (!mn1am) {
-                throw new Error("1AM Wallet extension not found. Please install it.");
-            }
+            // Polling for window.midnight to allow extension injection
+            const getMidnight = (): Promise<any> => {
+                return new Promise((resolve, reject) => {
+                    let attempts = 0;
+                    const interval = setInterval(() => {
+                        const mn = (window as any).midnight;
+                        if (mn && (mn.mn1am || mn.mnLace)) {
+                            clearInterval(interval);
+                            console.log("[Midnight Diagnostics] Wallet object detected on window.");
+                            resolve(mn);
+                        }
+                        attempts++;
+                        if (attempts >= 20) { // 2 seconds max
+                            clearInterval(interval);
+                            reject(new Error("Wallet extension not found. Please install 1AM or Lace."));
+                        }
+                    }, 100);
+                });
+            };
+
+            const midnight = await getMidnight();
+            const connector = midnight.mn1am || midnight.mnLace;
+            const wallet: DAppConnectorWalletAPI = await connector.enable();
             
-            const wallet: DAppConnectorWalletAPI = await mn1am.enable();
+            console.log("[Midnight Diagnostics] Connected to wallet API.");
             
             // Subscribe to wallet state changes if supported by the DApp Connector
             if (wallet.state && typeof wallet.state().subscribe === 'function') {
@@ -64,11 +82,19 @@ export function useMidnight() {
                 setWalletAddress('0x1AM...Connected');
             }
             
+            let networkConfig: any = {};
+            if (typeof connector.getConfiguration === 'function') {
+                networkConfig = await connector.getConfiguration();
+                console.log("[Midnight Diagnostics] Fetched Wallet Configuration:", networkConfig);
+            } else {
+                console.log("[Midnight Diagnostics] Fetched Wallet Configuration: (Mocked/Default)");
+            }
+            
             const midnightProviders: MidnightProviders = {
                 privateStateProvider: wallet.privateStateProvider,
                 zkConfigProvider: wallet.zkConfigProvider,
                 publicDataProvider: wallet.publicDataProvider,
-                proofProvider: wallet.proofProvider || httpClientProofProvider('http://127.0.0.1:6300'),
+                proofProvider: wallet.proofProvider || httpClientProofProvider(networkConfig?.proofServerUrl || 'http://127.0.0.1:6300'),
                 walletProvider: wallet.walletProvider,
             };
 
@@ -82,6 +108,7 @@ export function useMidnight() {
                 );
                 setContractInstance(instance);
                 await updateStatsUI(instance);
+                console.log("[Midnight Diagnostics] Contract successfully instantiated and synced.");
             }
             
             setIsWalletConnected(true);

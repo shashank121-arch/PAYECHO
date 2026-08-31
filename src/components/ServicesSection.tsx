@@ -41,14 +41,7 @@ export default function ServicesSection() {
                     >
                         <div className="rounded-2xl overflow-hidden aspect-video mb-8 relative">
                             {/* Strategy Video Placeholder */}
-                            <video 
-                                className="w-full h-full object-cover opacity-90"
-                                autoPlay 
-                                muted 
-                                loop 
-                                playsInline
-                                src="https://cdn.pixabay.com/video/2019/11/04/28744-370162089_large.mp4"
-                            />
+                            <div className="w-full h-full bg-gradient-to-tr from-blue-900 via-black to-purple-900 animate-pulse opacity-80" />
                         </div>
                         <div className="flex items-center gap-3 mb-4">
                             <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
@@ -71,14 +64,7 @@ export default function ServicesSection() {
                     >
                         <div className="rounded-2xl overflow-hidden aspect-video mb-8 relative">
                             {/* Execution Video Placeholder */}
-                            <video 
-                                className="w-full h-full object-cover opacity-90"
-                                autoPlay 
-                                muted 
-                                loop 
-                                playsInline
-                                src="https://cdn.pixabay.com/video/2021/08/04/83866-584742544_large.mp4"
-                            />
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-black to-gray-900 animate-pulse opacity-80" />
                         </div>
                         <div className="flex items-center gap-3 mb-4">
                             <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">

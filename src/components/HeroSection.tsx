@@ -11,18 +11,6 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ isWalletConnected, walletAddress, connectWallet, disconnectWallet, statusMessage }: HeroSectionProps) {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [isVideoLoaded, setIsVideoLoaded] = useState(false);
-
-    useEffect(() => {
-        const video = videoRef.current;
-        if (video) {
-            const handleCanPlay = () => setIsVideoLoaded(true);
-            video.addEventListener('canplay', handleCanPlay);
-            return () => video.removeEventListener('canplay', handleCanPlay);
-        }
-    }, []);
-
     const handleScrollDown = () => {
         document.getElementById('dashboard')?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -43,18 +31,8 @@ export default function HeroSection({ isWalletConnected, walletAddress, connectW
 
     return (
         <section className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center">
-            {/* Background Video Placeholder */}
-            <video
-                ref={videoRef}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                    isVideoLoaded ? 'opacity-40' : 'opacity-0'
-                }`}
-                autoPlay
-                muted
-                loop
-                playsInline
-                src="https://cdn.pixabay.com/video/2021/08/04/83866-584742544_large.mp4"
-            />
+            {/* Animated Gradient Background */}
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-black via-gray-900 to-black animate-pulse opacity-50" />
             
             {/* Gradient Overlay for better readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black pointer-events-none" />
