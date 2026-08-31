@@ -18,9 +18,9 @@
 > ### 🔗 Quick Links
 > | Resource | Link |
 > |---|---|
-> | 🌐 **Live Vercel Demo** | `[INSERT_VERCEL_LINK_HERE]` |
-> | 🎥 **YouTube / Loom Video** | `[INSERT_YOUTUBE_OR_LOOM_LINK_HERE]` |
-> | 📜 **Deployed Contract** | `[INSERT_CONTRACT_ADDRESS_HERE]` |
+> | 🌐 **Live Vercel Demo** | [https://payecho-phi.vercel.app/](https://payecho-phi.vercel.app/) |
+> | 🎥 **YouTube / Loom Video** | [https://www.loom.com/share/7f832fe9a4954247b2a7b114cdb57e43](https://www.loom.com/share/7f832fe9a4954247b2a7b114cdb57e43) |
+> | 📜 **Deployed Contract** | `02806c1326edbe4ecc853fd43765d7dbcb797167c4922443d1ac5e2cac60f292` |
 > | 🚀 **Project Proposal** | [Read proposal.md](proposal.md) |
 
 ---

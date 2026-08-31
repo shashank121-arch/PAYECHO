@@ -51,9 +51,12 @@ async function captureScreenshots(port) {
     try {
         const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
         console.log(`Navigating to http://localhost:${port}...`);
+        page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+        page.on('pageerror', err => console.log('BROWSER ERROR:', err.message));
         
-        await page.goto(`http://localhost:${port}`, { waitUntil: 'networkidle' });
-        await wait(2000);
+        await page.goto(`http://localhost:${port}`, { waitUntil: 'networkidle', timeout: 30000 });
+        console.log('Waiting for content to render...');
+        await wait(5000);
         
         console.log('Capturing hero-landing.png...');
         await page.screenshot({ path: path.join(assetsDir, 'hero-landing.png') });
