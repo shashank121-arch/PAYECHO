@@ -24,6 +24,12 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@midnight-ntwrk/dapp-connector-api": "*",
+    "@midnight-ntwrk/dapp-connector-proof-provider": "*",
+    "@midnight-ntwrk/midnight-js-compact": "*",
+    "@midnight-ntwrk/midnight-js-contracts": "*",
+    "@midnight-ntwrk/midnight-js-network-provider": "*",
+    "@midnight-ntwrk/midnight-js-providers": "*",
     "framer-motion": "^12.4.7",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
