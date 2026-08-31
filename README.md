@@ -88,11 +88,11 @@ Navigate to `http://localhost:5173` in your browser. *(Note: You must have the l
 
 ## 🖼️ Screenshot Artifacts
 
-### Contract Compilation
-![Successful Compile Output](assets/compile-output.png)
+### 🌌 Interface Overview
+![PayEcho Hero Landing](assets/hero-landing.png)
 
-### Live Deployment
-![Deployed Contract Address](assets/deployed-address.png)
+### 📊 Zero-Knowledge Dashboard & Public Ledger Sync
+![PayEcho ZK Dashboard](assets/zk-dashboard.png)
 
-### Passing CI/CD & Tests
-![Passing Test Suite](assets/passing-tests.png)
+### 🛡️ Protocol Security & Architecture
+![PayEcho Architecture](assets/philosophy-features.png)
