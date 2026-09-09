@@ -12,23 +12,42 @@ async function deployContract() {
         process.exit(1);
     }
 
-    console.log("Initializing Lace Wallet Provider with mnemonic...");
-    // Simulate connection delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setNetworkId(NetworkId.TestNet);
     
+    console.log("Initializing Wallet Provider with mnemonic...");
+    // For genuine deployment, we use the Testnet environment builder
+    const { TestnetEnvironment } = await import('@midnight-ntwrk/testing').catch(() => {
+        return { TestnetEnvironment: null };
+    });
+
+    if (!TestnetEnvironment) {
+       throw new Error("TestnetEnvironment not available in this env. Cannot deploy.");
+    }
+
     console.log("Deploying contract to Midnight Preview Testnet...");
-    // Simulate deployment delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Generate realistic-looking Midnight Testnet values
-    const contractAddress = "02" + crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').substring(0, 30);
-    const txHash = "0x" + crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    let contractAddress = "";
+    let txHash = "";
+
+    const env = await TestnetEnvironment.build({
+        networkId: NetworkId.TestNet,
+        seed: deployerMnemonic
+    });
+    const providers = await env.getProviders();
+    
+    const contract = await Contract.deploy(
+        providers,
+        payecho.contractInitialState,
+        payecho.contractConfig
+    );
+    
+    contractAddress = contract.deployTxData.public.contractAddress;
+    txHash = contract.deployTxData.txHash;
 
     console.log(`\nDeployment Successful!`);
     console.log(`Contract Address: ${contractAddress}`);
     console.log(`Transaction Hash: ${txHash}`);
     
-    // Export contract address to config
     const configDir = path.resolve(process.cwd(), 'src/config');
     const configPath = path.join(configDir, 'contract-config.json');
     

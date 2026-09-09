@@ -5,12 +5,4 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: [
-      {
-        find: /^@midnight-ntwrk\/(.*)/,
-        replacement: path.resolve(process.cwd(), 'src/mock-midnight.ts'),
-      },
-    ],
-  },
 })
