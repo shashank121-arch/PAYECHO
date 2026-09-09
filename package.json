@@ -37,7 +37,6 @@
     "@midnight-ntwrk/midnight-js": "latest",
     "@midnight-ntwrk/compact-runtime": "latest",
     "@midnight-ntwrk/midnight-js-contracts": "latest",
-    "@midnight-ntwrk/dapp-connector-proof-provider": "latest",
     "@midnight-ntwrk/midnight-js-types": "latest",
     "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "latest",
     "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "latest",

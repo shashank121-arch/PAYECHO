@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { type MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import { Contract, type ContractAddress } from '@midnight-ntwrk/midnight-js-contracts';
-import { httpClientProofProvider } from '@midnight-ntwrk/dapp-connector-proof-provider';
+import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import type { DAppConnectorAPI, DAppConnectorWalletAPI } from '@midnight-ntwrk/dapp-connector-api';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 
