@@ -22,8 +22,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Verify Types & Build Contract
         run: npm run build:contract && npx tsc --noEmit && npm run build
