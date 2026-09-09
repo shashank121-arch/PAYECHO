@@ -12,6 +12,7 @@ describe('PayEcho Smart Contract', () => {
     beforeAll(async () => {
         setNetworkId(NetworkId.TestNet);
         try {
+            // @ts-ignore
             const testing = await import('@midnight-ntwrk/testing');
             TestnetEnvironment = testing.TestnetEnvironment;
         } catch (e) {

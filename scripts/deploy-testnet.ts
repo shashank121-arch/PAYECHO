@@ -16,6 +16,7 @@ async function deployContract() {
     
     console.log("Initializing Wallet Provider with mnemonic...");
     // For genuine deployment, we use the Testnet environment builder
+    // @ts-ignore
     const { TestnetEnvironment } = await import('@midnight-ntwrk/testing').catch(() => {
         return { TestnetEnvironment: null };
     });
