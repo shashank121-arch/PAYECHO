@@ -23,5 +23,5 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Verify Types & Build Contract
-        run: npm run build:contract && npx tsc --noEmit && npm run build
+      - name: Verify Types, Tests & Build Contract
+        run: npm run build:contract && npx tsc --noEmit && npx vitest run && npm run build
