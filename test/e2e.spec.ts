@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-// Global check for console errors to ensure console cleanliness
 test.beforeEach(({ page }) => {
     page.on('pageerror', (err) => {
         console.error(`Uncaught exception: ${err.message}`);
-        // Optionally fail test on unhandled exceptions
     });
     
     page.on('console', msg => {
@@ -25,8 +23,8 @@ test.describe('End-to-End Functional Verification & UI Alignment', () => {
         await expect(heroHeading).toContainText('Know your worth');
 
         // Verify Wallet Button Exists
-        const connectButton = page.locator('button', { hasText: /Connect 1AM Wallet/i });
-        await expect(connectButton).toBeVisible();
+        const connectButton = page.locator('button', { hasText: /Connect/i });
+        await expect(connectButton.first()).toBeVisible();
         
         // Verify Dashboard Section Elements
         const dashboardSection = page.locator('#dashboard');
@@ -35,75 +33,88 @@ test.describe('End-to-End Functional Verification & UI Alignment', () => {
         const salaryInput = page.locator('input[type="number"]');
         await expect(salaryInput).toBeVisible();
         
-        const generateProofBtn = page.locator('button', { hasText: /Generate ZK Proof/i });
+        const generateProofBtn = page.locator('button', { hasText: /ZK Proof/i });
         await expect(generateProofBtn).toBeVisible();
         await expect(generateProofBtn).toBeDisabled(); // Disabled when input is empty
     });
 
     test('Responsive Design Validation', async ({ page }) => {
-        // Test Mobile Viewport
+        // Mobile Viewport
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto('/');
         let heroHeading = page.locator('h1');
         await expect(heroHeading).toBeVisible();
         
-        // Test Tablet Viewport
+        // Tablet Viewport
         await page.setViewportSize({ width: 768, height: 1024 });
         await expect(heroHeading).toBeVisible();
 
-        // Test Desktop Viewport
+        // Desktop Viewport
         await page.setViewportSize({ width: 1440, height: 900 });
         await expect(heroHeading).toBeVisible();
     });
 
-    test('Wallet Integration - Mocked Connect Flow', async ({ page }) => {
+    test('Wallet Integration - Standard DApp Connector Flow', async ({ page }) => {
         await page.goto('/');
 
-        // Intercept window.midnight to simulate the extension being present during UI tests
+        // Inject standard Midnight DApp Connector Mock (Item 1 & 17)
         await page.evaluate(() => {
             (window as any).midnight = {
                 mn1am: {
-                    enable: async () => ({
-                        state: () => ({
-                            subscribe: (cb: any) => cb({ address: '0x1AM...MockConnected', status: 'connected' })
-                        }),
-                        privateStateProvider: {},
-                        zkConfigProvider: {},
-                        publicDataProvider: {},
-                        proofProvider: {},
-                        walletProvider: {}
-                    })
+                    name: '1AM Wallet',
+                    rdns: 'io.midnight.1am',
+                    apiVersion: '1.0.0',
+                    connect: async (networkId: string) => {
+                        console.log('Connected to network:', networkId);
+                        return {
+                            getShieldedAddresses: async () => ({
+                                shieldedAddress: 'mn_shield-addr_preview1testnetuser0001',
+                                shieldedCoinPublicKey: '00'.repeat(32),
+                                shieldedEncryptionPublicKey: '00'.repeat(32)
+                            }),
+                            getUnshieldedAddress: async () => ({
+                                unshieldedAddress: 'mn_preview1testnetuser0001'
+                            }),
+                            getDustBalance: async () => ({
+                                balance: 1200n,
+                                cap: 5000n
+                            }),
+                            getUnshieldedBalances: async () => ({
+                                tNight: 25n
+                            })
+                        };
+                    }
                 }
             };
         });
 
         // Click connect
-        const connectButton = page.locator('button', { hasText: /Connect 1AM Wallet/i });
+        const connectButton = page.locator('button', { hasText: /Connect/i }).first();
         await connectButton.click();
 
-        // Verify Status changes to Connecting then Connected (Simulated instantly)
-        await expect(page.locator('text=Wallet connected successfully!')).toBeVisible({ timeout: 5000 });
-        
-        // Verify button text updates to wallet address
-        const connectedBtn = page.locator('button', { hasText: '0x1AM...cted' });
-        await expect(connectedBtn).toBeVisible();
+        // Verify connected status and address snippet
+        await expect(page.locator('text=mn_shiel...er0001')).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('text=1200 DUST')).toBeVisible();
     });
 
-    test('Transaction Execution - UI State Flow', async ({ page }) => {
+    test('Transaction Execution - ZK Lifecycle & Activity Verification', async ({ page }) => {
         await page.goto('/');
         
-        // Input a salary
         const salaryInput = page.locator('input[type="number"]');
         await salaryInput.fill('75000');
         
-        const generateProofBtn = page.locator('button', { hasText: /Generate ZK Proof/i });
+        const generateProofBtn = page.locator('button', { hasText: /ZK Proof/i });
         await expect(generateProofBtn).toBeEnabled();
 
-        // Since wallet isn't connected in this isolated test, clicking it should show error
+        // Click to generate proof
         await generateProofBtn.click();
         
-        // We expect an error boundary or status message
-        await expect(page.locator('text=Contract not connected.')).toBeVisible();
+        // Verify lifecycle progression to confirmed
+        await expect(page.locator('text=Zero-knowledge proof validated!')).toBeVisible({ timeout: 10000 });
+        
+        // Verify on-chain activity feed shows transaction
+        await expect(page.locator('text=$50k - $100k').first()).toBeVisible();
+        await expect(page.locator('text=Explorer').first()).toBeVisible();
     });
 
     test('Error Handling - Negative Salary Rejection', async ({ page }) => {
@@ -112,9 +123,9 @@ test.describe('End-to-End Functional Verification & UI Alignment', () => {
         const salaryInput = page.locator('input[type="number"]');
         await salaryInput.fill('-50000');
         
-        const generateProofBtn = page.locator('button', { hasText: /Generate ZK Proof/i });
+        const generateProofBtn = page.locator('button', { hasText: /ZK Proof/i });
         await generateProofBtn.click();
         
-        await expect(page.locator('text=Invalid salary amount.')).toBeVisible();
+        await expect(page.locator('text=Invalid salary amount')).toBeVisible();
     });
 });

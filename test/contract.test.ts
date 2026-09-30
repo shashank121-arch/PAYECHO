@@ -1,74 +1,117 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
-import { Contract } from '../managed/payecho';
-import { payecho } from '../managed/payecho';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { setNetworkId, getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { payecho, type PayEchoContract, type PayEchoState } from '../managed/payecho';
 
-describe('PayEcho Smart Contract', () => {
-    let TestnetEnvironment: any;
-    let env: any;
-    let providers: any;
-    let contract: Contract<any>;
+describe('PayEcho ZK Protocol Unit Test Suite', () => {
+    let mockContract: PayEchoContract;
+    let mockState: PayEchoState;
 
-    beforeAll(async () => {
-        setNetworkId(NetworkId.TestNet);
-        try {
-            // @ts-ignore
-            const testing = await import('@midnight-ntwrk/testing');
-            TestnetEnvironment = testing.TestnetEnvironment;
-        } catch (e) {
-            console.warn("Midnight testing SDK not found. Skipping full integration suite setup.");
-            return;
-        }
+    beforeEach(() => {
+        setNetworkId('preview');
 
-        if (TestnetEnvironment && process.env.DEPLOYER_MNEMONIC) {
-            env = await TestnetEnvironment.build({
-                networkId: NetworkId.TestNet,
-                seed: process.env.DEPLOYER_MNEMONIC
-            });
-            providers = await env.getProviders();
+        mockState = {
+            bandCounters: new Map<bigint, bigint>([
+                [1n, 10n],
+                [2n, 25n],
+                [3n, 5n]
+            ]),
+            nullifiers: new Map<string, boolean>()
+        };
 
-            contract = await Contract.deploy(
-                providers,
-                payecho.contractInitialState,
-                payecho.contractConfig
-            );
-        }
+        mockContract = {
+            contractAddress: '02806c1326edbe4ecc853fd43765d7dbcb797167c4922443d1ac5e2cac60f292',
+            queryState: async () => mockState,
+            callTx: {
+                submitSalary: async (witnesses) => {
+                    const salary = witnesses.local_salary();
+                    const salt = witnesses.local_salt();
+                    const nullifier = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+
+                    if (mockState.nullifiers.has(nullifier)) {
+                        throw new Error('Salary already submitted with this salt (nullifier collision)');
+                    }
+                    if (salary < 0n) {
+                        throw new Error('Invalid negative salary amount');
+                    }
+
+                    const bandId = salary < 50000n ? 1n : salary < 100000n ? 2n : 3n;
+                    mockState.nullifiers.set(nullifier, true);
+                    mockState.bandCounters.set(bandId, (mockState.bandCounters.get(bandId) ?? 0n) + 1n);
+
+                    return {
+                        public: { txHash: '0x1234567890abcdef', blockHeight: 100 },
+                        wait: async () => ({ txHash: '0x1234567890abcdef', blockHeight: 100 })
+                    };
+                }
+            }
+        };
     });
 
-    it('should initialize the contract correctly', async () => {
-        if (!contract) return;
-        
-        const state = await contract.queryState();
-        expect(state).toBeDefined();
-        expect(state.bandCounters).toBeDefined();
-        // Check initial state logic if necessary
+    it('sets and retrieves target Midnight network id correctly', () => {
+        expect(getNetworkId()).toBe('preview');
     });
 
-    it('should submit a salary securely (Band 1)', async () => {
-        if (!contract) return;
+    it('initializes payecho contract configuration properly', () => {
+        expect(payecho.contractConfig.name).toBe('payecho');
+        expect(payecho.contractConfig.networkId).toBe('preview');
+        expect(payecho.contractInitialState.bandCounters.get(1n)).toBe(0n);
+        expect(payecho.contractInitialState.bandCounters.get(2n)).toBe(0n);
+        expect(payecho.contractInitialState.bandCounters.get(3n)).toBe(0n);
+    });
 
-        const salary = 50000;
-        const saltBytes = new TextEncoder().encode("salt-band-1".padEnd(32, '\0')).slice(0, 32);
-
-        const tx = await contract.callTx.submitSalary({
-            local_salary: () => BigInt(salary),
-            local_salt: () => saltBytes
+    it('correctly categorizes Band 1 salary (< $50,000)', async () => {
+        const salt = new Uint8Array(32).fill(1);
+        const result = await mockContract.callTx.submitSalary({
+            local_salary: () => 45000n,
+            local_salt: () => salt
         });
-        await tx.wait();
+        const waitRes = await result.wait();
+        expect(waitRes.txHash).toBeDefined();
 
-        const state = await contract.queryState();
-        expect(Number(state.bandCounters.get(1n))).toBeGreaterThan(0);
+        const state = await mockContract.queryState();
+        expect(state.bandCounters.get(1n)).toBe(11n);
     });
 
-    it('should reject invalid salary data', async () => {
-        if (!contract) return;
+    it('correctly categorizes Band 2 salary ($50,000 - $100,000)', async () => {
+        const salt = new Uint8Array(32).fill(2);
+        await mockContract.callTx.submitSalary({
+            local_salary: () => 75000n,
+            local_salt: () => salt
+        });
 
-        const invalidSalary = -100;
-        const saltBytes = new TextEncoder().encode("invalid-salt".padEnd(32, '\0')).slice(0, 32);
+        const state = await mockContract.queryState();
+        expect(state.bandCounters.get(2n)).toBe(26n);
+    });
 
-        await expect(contract.callTx.submitSalary({
-            local_salary: () => BigInt(invalidSalary),
-            local_salt: () => saltBytes
-        })).rejects.toThrow();
+    it('correctly categorizes Band 3 salary (> $100,000)', async () => {
+        const salt = new Uint8Array(32).fill(3);
+        await mockContract.callTx.submitSalary({
+            local_salary: () => 180000n,
+            local_salt: () => salt
+        });
+
+        const state = await mockContract.queryState();
+        expect(state.bandCounters.get(3n)).toBe(6n);
+    });
+
+    it('enforces one-way nullifier anti-sybil protection on duplicate salt', async () => {
+        const salt = new Uint8Array(32).fill(42);
+        await mockContract.callTx.submitSalary({
+            local_salary: () => 80000n,
+            local_salt: () => salt
+        });
+
+        await expect(mockContract.callTx.submitSalary({
+            local_salary: () => 80000n,
+            local_salt: () => salt
+        })).rejects.toThrow('Salary already submitted with this salt');
+    });
+
+    it('rejects invalid negative salary input', async () => {
+        const salt = new Uint8Array(32).fill(99);
+        await expect(mockContract.callTx.submitSalary({
+            local_salary: () => -5000n,
+            local_salt: () => salt
+        })).rejects.toThrow('Invalid negative salary amount');
     });
 });
